@@ -10,7 +10,7 @@ dotenv.config();
 app.use(express.json());
 
 
-const dbUrl = process.env.DB_URL  || 'mongodb://localhost:27017/recipe_db';
+const dbUrl =  process.env.DB_URL || 'mongodb://localhost:27017/recipe_db';
 
 mongoose.connect(dbUrl);
 
@@ -29,11 +29,12 @@ app.get('/hello', (req, res) => {
 
 app.post('/register', async (req, res) => {
     try {
-        const { uid } = req.body;
-        const user = new User({ uid });
+        const { uid, username } = req.body;
+        const user = new User({ uid: uid, username: username });
         await user.save();
         res.json({
             success: true,
+            user: user,
             message: 'User registered successfully'
         });
     } catch (e) {
@@ -46,9 +47,13 @@ app.post('/register', async (req, res) => {
 app.get('/login', async (req, res) => {
     try {
         const { uid } = req.body;
+        console.log('uid', uid)
         const user = await User.findOne({ uid });
+
         res.json({
-            user: user
+            user: user, 
+            message: 'User logged in successfully',
+            success: true
         })
     } catch (e) {
         res.status(500).json({
@@ -59,34 +64,57 @@ app.get('/login', async (req, res) => {
 
 app.post('/like', async (req, res) => {
     try {
-      const { uid, id } = req.body;  // Getting user ID and recipe ID
-      const user = await User.findOne({ uid }).populate('liked');  // Populating liked recipes
-      const recipe = await Recipe.findOne({ id: id });  // Ensure you're querying by 'id' field
+      const { uid, id } = req.body;  
+      const user = await User.findOne({ uid }).populate('liked'); 
+      const recipe = await Recipe.findOne({ id: id }); 
 
-      // Check if the recipe has already been liked by comparing 'id' fields
       const alreadyLiked = user.liked.some((like) => like.id === recipe.id);
 
       if (alreadyLiked) {
         return res.json({
           success: false,
-          message: 'Already liked',  // Return message if already liked
+          message: 'Already liked', 
         });
       }
   
-      // Push the new recipe into the liked array
       user.liked.push(recipe);
       await user.save();
   
       res.json({
         success: true,
-        message: 'Liked added successfully',  // Return success message
+        message: 'Liked added successfully', 
       });
     } catch (e) {
-      console.error('Error:', e.message);  // Log any errors
-      res.status(500).json({ message: e.message });  // Return error response
+      console.error('Error:', e.message); 
+      res.status(500).json({ message: e.message }); 
     }
 });
 
+app.post('/dislike', async (req, res) => {
+    try {
+      const { uid, id } = req.body;
+      const user = await User.findOne({ uid }).populate('liked');
+      const recipeIndex = user.liked.findIndex((like) => like.id === id);
+  
+      if (recipeIndex === -1) {
+        return res.json({
+          success: false,
+          message: "Recipe not found in liked list",
+        });
+      }
+  
+      user.liked.splice(recipeIndex, 1);
+      await user.save();
+  
+      res.json({
+        success: true,
+        message: "Recipe disliked successfully",
+      });
+    } catch (e) {
+      console.error("Error:", e.message);
+      res.status(500).json({ message: e.message });
+    }
+  });
   
 
 
@@ -136,10 +164,14 @@ app.get('/check-like', async (req, res) => {
     }
   })
 
+//--DEVELOPMENT SERVER--//
 
-  
+//   app.listen( 3000, '0.0.0.0.', () => {
+//     console.log('Server running on port 3000');
+//   });
   
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log('Server is running on port 3000');
-})
+//--PRODUCTION SERVER--//
+  app.listen(process.env.PORT || 3000, () => {
+    console.log('Server running on port 3000');
+  });

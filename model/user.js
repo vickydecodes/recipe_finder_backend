@@ -7,6 +7,10 @@ const UserSchema = new Schema({
         type: String,
         required: true
     },
+    username: {
+        type: String,
+        required: true
+    },
     liked:[{
         type: Schema.Types.ObjectId,
         ref: 'Recipe'
