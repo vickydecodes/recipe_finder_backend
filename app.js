@@ -46,9 +46,9 @@ app.post('/register', async (req, res) => {
 
 app.get('/login', async (req, res) => {
     try {
-        const { uid } = req.body;
+        const { uid } = req.query;
         console.log('uid', uid)
-        const user = await User.findOne({ uid });
+        const user = await User.findOne({ uid: uid });
 
         res.json({
             user: user, 
@@ -166,9 +166,9 @@ app.get('/check-like', async (req, res) => {
 
 //--DEVELOPMENT SERVER--//
 
-//   app.listen( 3000, '0.0.0.0.', () => {
-//     console.log('Server running on port 3000');
-//   });
+  // app.listen( 3000, '0.0.0.0', () => {
+  //   console.log('Server running on port 3000');
+  // });
   
 
 //--PRODUCTION SERVER--//
